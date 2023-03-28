@@ -38,7 +38,7 @@ services:
       - grafana
 
   grafana:
-    image: grafana/grafana:8.4.5
+    build: ./grafana
     restart: unless-stopped
     ports:
       - 3000:3000
@@ -47,6 +47,9 @@ services:
     environment:
       - "GF_DEFAULT_APP_MODE=development"
       - "GF_LOG_LEVEL=debug"
+      - "GF_SERVER_CERT_FILE=/etc/grafana/grafana.crt" # adjust to match your domain name
+      - "GF_SERVER_CERT_KEY=/etc/grafana/grafana.key" # adjust to match your domain name
+      - "GF_SERVER_PROTOCOL=https"
 
   app:
     build: ./app
