@@ -1,7 +1,9 @@
-FROM grafana/grafana:8.4.5
+FROM grafana/grafana:10.0.0
+
 USER root
 
-RUN openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
+RUN apk add openssl && \
+    openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
     -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=localhost" \
     -keyout /etc/grafana/grafana.key  -out /etc/grafana/grafana.crt
 

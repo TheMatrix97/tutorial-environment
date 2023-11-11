@@ -5,6 +5,7 @@ networks:
 
 volumes:
   app_data: {}
+  grafana_data: {}
 
 services:
   prometheus:
@@ -15,16 +16,12 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-    ports:
-      - 9090:9090
     networks:
       - grafana
 
   loki:
     image: grafana/loki:2.4.2
     restart: unless-stopped
-    ports:
-      - 3100:3100
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - grafana
@@ -44,12 +41,16 @@ services:
       - 3000:3000
     networks:
       - grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
     environment:
       - "GF_DEFAULT_APP_MODE=development"
       - "GF_LOG_LEVEL=debug"
       - "GF_SERVER_CERT_FILE=/etc/grafana/grafana.crt" # adjust to match your domain name
       - "GF_SERVER_CERT_KEY=/etc/grafana/grafana.key" # adjust to match your domain name
       - "GF_SERVER_PROTOCOL=https"
+      - "GF_SECURITY_ADMIN_USER=admin"
+      - "GF_SECURITY_ADMIN_PASSWORD=cloud2023"
 
   app:
     build: ./app
@@ -64,7 +65,21 @@ services:
   db:
     image: grafana/tns-db:latest
     restart: unless-stopped
-    ports:
-      - 8082:80
+    networks:
+      - grafana
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command: 
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
     networks:
       - grafana
