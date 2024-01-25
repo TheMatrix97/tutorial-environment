@@ -19,3 +19,6 @@ To start the sample application and the supporting services:
 docker-compose up -d
 ```
 
+## Lab
+
+Check this lab documentation -> [LAB README](./LAB.md)
