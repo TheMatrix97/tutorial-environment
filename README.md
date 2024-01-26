@@ -21,4 +21,4 @@ docker-compose up -d
 
 ## Lab
 
-Check this lab documentation -> [LAB README](./LAB.md)
+Check this lab documentation -> [LAB README](./lab/README.md)
