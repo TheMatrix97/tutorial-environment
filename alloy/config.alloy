@@ -1,0 +1,54 @@
+/* LOGS */
+
+// Log source /var/log
+local.file_match "local_log_files" {
+  path_targets = [{"__path__" = "/app/logs/*.log"}]
+  sync_period = "5s"
+}
+
+// Scrape Logs
+loki.source.file "log_scrape" {
+  targets    = local.file_match.local_log_files.targets
+  forward_to = [loki.write.grafana_loki.receiver] // Send logs to Loki
+  tail_from_end = true
+}
+
+// Write endpoint to Loki
+loki.write "grafana_loki" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+/* METRICS */
+prometheus.exporter.unix "local_system" {
+  procfs_path = "/host/proc"
+  rootfs_path = "/rootfs"
+  sysfs_path = "/host/sys"
+
+  filesystem {
+    mount_points_exclude = "^/(sys|proc|dev|host|etc)($$|/)"
+  }
+
+} // Node_exporter Requires to mount bind mount the filesystem, procfs, and sysfs from the host machine
+
+prometheus.scrape "node" {
+  targets    = prometheus.exporter.unix.local_system.targets
+  scrape_interval = "15s"
+  forward_to = [prometheus.remote_write.grafana_prom.receiver]
+}
+
+prometheus.scrape "tns_app" {
+  targets = [{
+    __address__ = "app:80",
+  }]
+  scrape_interval = "5s" // High detail scrape
+  scrape_timeout = "5s"
+  forward_to = [prometheus.remote_write.grafana_prom.receiver]
+}
+
+prometheus.remote_write "grafana_prom" {
+  endpoint {
+   url = "http://prometheus:9090/api/v1/write"
+  }
+}
